@@ -134,6 +134,8 @@ export function mapSystemStatus(status: ApiSystemStatus): SystemStatus {
     service: status.service,
     version: status.version,
     environment: status.environment,
+    provider: status.provider,
+    model: status.model,
     capabilities: {
       chat: status.capabilities.chat,
       documentProcessing: status.capabilities.document_processing,
@@ -154,4 +156,3 @@ export function mapChatResponse(response: ApiChatResponse): ChatResponse {
     createdAt: response.created_at,
   }
 }
-

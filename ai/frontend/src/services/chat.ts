@@ -10,7 +10,11 @@ export async function sendChatMessage(request: ChatRequest, signal?: AbortSignal
     document_ids: request.documentIds ?? [],
     analysis_ids: request.analysisIds ?? [],
   }
-  const response = await apiRequest<ApiChatResponse>('/api/v1/chat', { method: 'POST', body: payload, signal })
+  const response = await apiRequest<ApiChatResponse>('/api/v1/chat', {
+    method: 'POST',
+    body: payload,
+    signal,
+    timeoutMs: 35_000,
+  })
   return mapChatResponse(response)
 }
-

@@ -1,71 +1,56 @@
 # NeuroLab AI — Backend
 
-Fundação técnica independente da **NeuroLab AI — Assistente Científica**, parte do ecossistema NeuroLab Digital.
+Backend FastAPI independente da **NeuroLab AI — Assistente Científica**, parte do ecossistema NeuroLab Digital.
 
-Esta etapa oferece contratos HTTP, validação, dados demonstrativos e pontos de extensão. Ela não executa inteligência artificial, não processa documentos e não produz conteúdo científico.
+O chat usa a Gemini Developer API exclusivamente com um projeto no **Free Tier**. O modelo padrão é o identificador estável/GA `gemini-3.6-flash`; um identificador fixo foi escolhido para evitar a troca automática provocada por aliases como `gemini-flash-latest`.
 
-## Escopo atual
-
-- FastAPI com prefixo `/api/v1` e health check independente.
-- Schemas Pydantic v2 estritos e tipados.
-- Erros estruturados sem stack traces ou detalhes internos.
-- CORS explícito para o frontend local.
-- Logging de método, rota, status e duração, sem corpo das requisições.
-- Services conectados a repositories em memória.
-- Documentos, análises, revisões e comparações exclusivamente demonstrativos, sempre com `demo: true`.
-- Chat explicitamente indisponível com HTTP `501 AI_NOT_CONFIGURED`.
-
-## Arquitetura
+## Arquitetura do chat
 
 ```text
-app/
-├── api/             # Rotas e dependências HTTP
-├── core/            # Configuração, erros e logging
-├── data/            # Dados neutros de demonstração
-├── repositories/    # Contratos e implementação em memória
-├── schemas/         # Contratos públicos Pydantic
-├── services/        # Regras de aplicação
-└── main.py          # Criação da aplicação FastAPI
-tests/               # Testes automatizados da API
+POST /api/v1/chat
+  → ChatService
+  → AIProvider
+  → GeminiProvider
+  → Gemini Developer API
 ```
 
-O fluxo das funcionalidades com dados é:
+A rota não conhece a chave nem o SDK do Google. `ChatService` recebe um `AIProvider`, o que permite usar um fake nos testes e trocar o provedor no futuro sem alterar a rota. A integração é assíncrona (`client.aio`), sem streaming, retries automáticos, ferramentas, Search Grounding, histórico persistente ou banco de chat.
 
-```text
-Route → Service → Repository → Demo data
+Cada chamada é independente. O texto do usuário tem limite de 4.000 caracteres, a saída é limitada a 512 tokens e o nível de raciocínio é `low`, equilibrando qualidade, latência e consumo da cota. A chamada externa tem timeout de 30 segundos. `sources` é sempre `[]`, pois a base científica do NeuroLab não está conectada.
+
+## Free Tier e chave
+
+1. Crie manualmente a chave em [Google AI Studio](https://aistudio.google.com/app/apikey), em um projeto identificado como nível gratuito.
+2. Não vincule conta de cobrança e não ative billing.
+3. Copie `.env.example` para `.env` e preencha localmente apenas `GEMINI_API_KEY`.
+
+```dotenv
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.6-flash
 ```
 
-Essa separação permite trocar os repositories em memória no futuro sem reconstruir as rotas. Nenhum repository de banco foi implementado nesta etapa.
+O aplicativo não cria chaves, projetos ou configuração de faturamento. O Free Tier depende de a chave pertencer a um projeto gratuito no Google AI Studio. A aplicação inicia sem a chave; nesse caso, somente o chat retorna HTTP 503 com `AI_NOT_CONFIGURED`, enquanto `/health` permanece saudável.
 
-## Requisitos
+O SDK oficial de runtime é `google-genai>=2.23,<3.0`. O SDK legado `google-generativeai` não é usado.
 
-- Python 3.11 ou superior.
+## Instalação e execução
 
-## Instalação no Windows
-
-No PowerShell, a partir de `ai/backend`:
+Requer Python 3.11 ou superior. No PowerShell, a partir de `ai/backend`:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements-dev.txt
-```
-
-Copie `.env.example` para `.env` somente se quiser alterar os valores locais. Nenhuma chave secreta é necessária.
-
-## Execução
-
-```powershell
 uvicorn app.main:app --reload --port 8001
 ```
 
 Endereços locais:
 
 - API: `http://127.0.0.1:8001`
-- Health check: `http://127.0.0.1:8001/health`
+- Health: `http://127.0.0.1:8001/health`
+- Status: `http://127.0.0.1:8001/api/v1/system/status`
 - Swagger: `http://127.0.0.1:8001/docs`
-- OpenAPI: `http://127.0.0.1:8001/openapi.json`
 
 ## Testes
 
@@ -73,34 +58,37 @@ Endereços locais:
 pytest
 ```
 
-## Endpoints
+Os testes automatizados sempre substituem ou desativam o provider e nunca chamam a Gemini real. Para um teste manual, use somente mensagens comuns ou fictícias, por exemplo:
 
-| Método | Endpoint | Estado atual |
+- `Olá. Quem é você?`
+- `Você consegue analisar as pesquisas científicas do NeuroLab?`
+
+A segunda resposta deve informar que a base científica ainda não está conectada.
+
+## Erros do chat
+
+| HTTP | Código | Situação |
 |---|---|---|
-| `GET` | `/health` | Disponível |
-| `GET` | `/api/v1/system/status` | Disponível |
-| `GET` | `/api/v1/documents` | Dados demo |
-| `GET` | `/api/v1/documents/{document_id}` | Dados demo |
-| `GET` | `/api/v1/analyses` | Dados demo |
-| `GET` | `/api/v1/analyses/{analysis_id}` | Dados demo |
-| `GET` | `/api/v1/reviews` | Dados demo |
-| `POST` | `/api/v1/comparisons` | Comparação de dados demo |
-| `POST` | `/api/v1/chat` | Indisponível; retorna HTTP 501 |
+| 429 | `AI_RATE_LIMITED` | Cota temporária do Free Tier atingida |
+| 502 | `AI_RESPONSE_INVALID` | O provider não retornou texto utilizável |
+| 503 | `AI_NOT_CONFIGURED` | Chave ausente |
+| 503 | `AI_PROVIDER_UNAVAILABLE` | Gemini temporariamente indisponível |
+| 504 | `AI_TIMEOUT` | A chamada excedeu 30 segundos |
 
-## Configuração
+Mensagens técnicas do Google, prompts, respostas completas e credenciais não são registrados nem enviados ao cliente.
 
-As configurações são lidas por `pydantic-settings`:
+## Privacidade no Free Tier
 
-- `APP_NAME`
-- `APP_ENV` (`development` ou `test`)
-- `APP_VERSION`
-- `LOG_LEVEL`
-- `API_PREFIX`
-- `CORS_ORIGINS` (lista separada por vírgulas)
+No Free Tier, os dados enviados podem ser usados pelo Google para melhorar seus produtos. Nesta fase, **não envie**:
 
-## Limitações intencionais
+- dados pessoais ou sensíveis;
+- dados reais de participantes;
+- documentos ou datasets privados;
+- material confidencial ou arquivos internos;
+- credenciais.
 
-Não foram implementados: IA, provedores de modelos, RAG, embeddings, pesquisa científica, busca de artigos, upload ou leitura de arquivos, banco de dados, ORM, migrations, autenticação, persistência, filas, streaming, WebSockets ou integrações externas.
+Use somente mensagens comuns, conteúdo fictício e dados demonstrativos.
 
-Os textos em `app/data/demo.py` são neutros, fictícios e destinados apenas a testes de contrato e interface. Eles não representam literatura, evidência ou conclusão científica.
+## Limitações atuais
 
+Não estão implementados: acesso à base científica, RAG, embeddings, pesquisa científica, upload, PDF/OCR, datasets, Power BI, Search Grounding, function calling, agentes, memória persistente, autenticação nova, banco de dados, streaming, SSE ou WebSocket. Os demais endpoints demonstrativos existentes permanecem inalterados.

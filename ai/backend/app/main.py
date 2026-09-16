@@ -1,11 +1,21 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.dependencies import close_ai_provider
 from app.api.router import api_router
 from app.api.routes.health import router as health_router
 from app.core.config import AppEnvironment, get_settings
 from app.core.errors import register_error_handlers
 from app.core.logging import RequestLoggingMiddleware, configure_logging
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    yield
+    await close_ai_provider()
 
 
 def create_app() -> FastAPI:
@@ -17,6 +27,7 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         description="Assistente científica do ecossistema NeuroLab Digital.",
         version=settings.app_version,
+        lifespan=lifespan,
         docs_url="/docs" if docs_enabled else None,
         redoc_url="/redoc" if docs_enabled else None,
         openapi_url="/openapi.json" if docs_enabled else None,
@@ -36,4 +47,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-

@@ -1,6 +1,6 @@
 # NeuroLab AI — Assistente Científica
 
-Frontend React da NeuroLab AI integrado ao backend FastAPI de demonstração.
+Frontend React da NeuroLab AI integrado ao backend FastAPI e ao chat Gemini Free Tier.
 
 ## Executar localmente
 
@@ -30,6 +30,8 @@ npm run preview
 - Documentos, análises, revisões, comparação e estado do sistema são carregados pela API.
 - A camada central em `src/services/api.ts` aplica URL-base, timeout, cancelamento, validação de JSON e erros tipados.
 - Os contratos de transporte permanecem em `snake_case`; os serviços os convertem para os tipos de interface em `camelCase`.
-- O chat consulta o endpoint real, que atualmente responde `501 AI_NOT_CONFIGURED`; a interface informa essa indisponibilidade sem inventar respostas.
+- O chat envia mensagens para `POST /api/v1/chat`, mostra o estado de carregamento e evita envio duplo enquanto aguarda a resposta.
+- Respostas sem fontes não exibem um bloco vazio. Nesta etapa, o backend sempre retorna `sources: []`.
+- As opções de contexto documental permanecem apenas visuais e são identificadas como recurso de uma próxima etapa.
 - O upload e a ação local de revisão continuam demonstrativos e não persistem.
-- Não há modelo de IA, pesquisa externa, RAG, banco de dados ou autenticação nesta fase.
+- Não há pesquisa externa, RAG, acesso a documentos, banco de dados de chat ou autenticação nova nesta fase.

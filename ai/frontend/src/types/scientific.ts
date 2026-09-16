@@ -83,6 +83,8 @@ export interface SystemStatus {
   service: string
   version: string
   environment: string
+  provider: string
+  model: string
   capabilities: {
     chat: boolean
     documentProcessing: boolean

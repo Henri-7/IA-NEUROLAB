@@ -22,6 +22,8 @@ export interface ApiSystemStatus {
   service: string
   version: string
   environment: string
+  provider: string
+  model: string
   capabilities: {
     chat: boolean
     document_processing: boolean

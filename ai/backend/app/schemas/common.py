@@ -32,5 +32,6 @@ class SystemStatusResponse(StrictSchema):
     service: str
     version: str
     environment: str
+    provider: str
+    model: str
     capabilities: Capabilities
-

@@ -10,10 +10,12 @@ router = APIRouter(prefix="/system", tags=["System"])
 
 @router.get("/status", response_model=SystemStatusResponse, summary="Consultar capacidades atuais")
 def system_status(settings: Annotated[Settings, Depends(get_settings)]) -> SystemStatusResponse:
+    ai_configured = settings.gemini_configured
     return SystemStatusResponse(
         service="neurolab-ai",
         version=settings.app_version,
         environment=settings.app_env.value,
-        capabilities=Capabilities(),
+        provider="gemini",
+        model=settings.gemini_model,
+        capabilities=Capabilities(chat=ai_configured, ai_provider=ai_configured),
     )
-

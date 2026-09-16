@@ -93,18 +93,18 @@ export function ChatPage() {
           <div className="context-heading"><span className="context-icon"><Layers3 size={17} /></span><div><span className="mono-label">ESCOPO DAS FONTES</span><h2>Contexto da conversa</h2></div></div>
           <div className="context-controls">
             <label className="context-select"><span className="visually-hidden">Selecionar contexto da conversa</span><select value={contextType} onChange={(event) => setContextType(event.target.value as ApiChatContextType)} aria-label="Contexto da conversa"><option value="all_documents">Todos os documentos</option><option value="selected_documents">Documentos selecionados</option><option value="specific_analysis">Análise específica</option></select></label>
-            <span className="document-availability"><FileStack size={15} /> {documentIds.length} documentos disponíveis</span>
+            <span className="document-availability"><FileStack size={15} /> Contexto documental disponível em uma próxima etapa</span>
           </div>
         </header>
 
         <div className="chat-conversation" aria-label="Conversa">
           {(chatUnavailable || systemError) && <div className="chat-capability-notice" role="status"><CircleAlert size={18} /><div><strong>{chatUnavailable ? 'Assistente ainda não configurada' : 'Status do serviço indisponível'}</strong><p>{systemError || 'O backend informa que chat, IA e análise científica permanecem desativados nesta etapa.'}</p></div></div>}
 
-          {!lastQuestion && <div className="chat-empty-example"><span><MessageSquareText size={18} /></span><div><strong>Estado inicial</strong><p>Envie uma mensagem para validar o contrato. Nenhuma resposta científica será simulada.</p></div></div>}
+          {!lastQuestion && <div className="chat-empty-example"><span><MessageSquareText size={18} /></span><div><strong>Inicie uma conversa</strong><p>A assistente pode conversar, mas a base científica e os documentos do NeuroLab ainda não estão conectados.</p></div></div>}
 
           {lastQuestion && <article className="message-block user-message"><div className="message-meta"><span className="message-avatar"><UserRound size={16} /></span><strong>Você</strong></div><p>{lastQuestion}</p></article>}
 
-          {sending && <article className="message-block assistant-message"><div className="message-meta"><span className="message-avatar"><Bot size={16} /></span><strong>Verificando disponibilidade…</strong></div></article>}
+          {sending && <article className="message-block assistant-message"><div className="message-meta"><span className="message-avatar"><Bot size={16} /></span><strong>Gerando resposta…</strong></div></article>}
 
           {chatError && <article className="message-block assistant-message insufficient-message"><div className="message-meta"><span className="message-avatar"><Bot size={16} /></span><strong>Assistente científica</strong><StatusBadge status="Indisponível" /></div><div className="insufficient-notice"><p>{chatError}</p></div><small>O backend respondeu de forma segura, sem produzir conteúdo científico fictício.</small></article>}
 
@@ -118,7 +118,7 @@ export function ChatPage() {
             <textarea id="chat-message" rows={2} value={message} onChange={(event) => setMessage(event.target.value)} maxLength={4000} placeholder="Pergunte sobre os estudos..." />
             <button className="button primary chat-send" type="submit" disabled={sending || !message.trim()}>Enviar <Send size={16} /></button>
           </form>
-          <p className="composer-disclaimer">Integração demo · o backend ainda não possui modelo de IA configurado.</p>
+          <p className="composer-disclaimer">Gemini Free Tier · sem acesso a documentos, pesquisas ou dados privados do NeuroLab.</p>
         </footer>
       </section>
     </div>
