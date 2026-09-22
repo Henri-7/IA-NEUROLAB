@@ -1,6 +1,6 @@
 import type { ApiErrorResponse } from '../types/api'
 
-const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8001'
+const LOCAL_API_BASE_URL = 'http://127.0.0.1:8001'
 const DEFAULT_TIMEOUT_MS = 9_000
 
 export type ApiErrorKind = 'api' | 'network' | 'timeout' | 'cancelled' | 'invalid-response'
@@ -24,7 +24,8 @@ interface ApiRequestOptions {
   timeoutMs?: number
 }
 
-const configuredBaseUrl = import.meta.env.VITE_AI_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
+const configuredBaseUrl = import.meta.env.VITE_AI_API_BASE_URL?.trim()
+  || (import.meta.env.DEV ? LOCAL_API_BASE_URL : '')
 const apiBaseUrl = configuredBaseUrl.replace(/\/+$/, '')
 
 function isApiErrorResponse(value: unknown): value is ApiErrorResponse {

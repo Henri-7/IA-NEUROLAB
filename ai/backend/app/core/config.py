@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class AppEnvironment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
+    PRODUCTION = "production"
 
 
 class Settings(BaseSettings):
